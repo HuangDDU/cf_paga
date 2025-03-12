@@ -1,0 +1,58 @@
+name: Docker Check
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  check-docker-image-version:
+    runs-on: ubuntu-latest
+    
+    outputs:
+        cf_paga_changed: ${{ steps.compare-version.cf_paga_changed }}
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install yq
+      run: sudo apt-get install -y yq
+
+    - name: Check docker image version
+      id: compare-version
+      run:  |
+          # current version is written in definition.yml
+          # METHOD_ID=$(yq e ".method.id" definition.yml)
+          METHOD_ID="cf_paga"
+          CURRENT_VERSION=$(yq e ".method.version" definition.yml)
+          # previous version 
+          # PREVIOUS_VERSION=$(git show HEAD^:definition.yml | yq e ".method.version") # last commit before the push
+          VERSION_LIST=$(skopeo list-tags docker://huangzhaoyang/cf_paga | jq -r ".Tags[]" | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$")
+          PREVIOUS_VERSION=$(echo $VERSION_LIST | tail -n 1)
+          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+            echo "$METHOD_ID is new newer version,  build, test and push docker image!"
+            echo "::set-output name=${$METHOD_ID}_changed::true"
+          else
+            echo "$METHOD_ID is the latest version."
+            echo "::set-output name=${$METHOD_ID}_changed::false"
+          fi
+
+#   push-docker-image:
+#     needs: check-docker-image-version
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         var: ["cf_paga"]
+#     steps:
+#       - name: Build, Test, Push
+#         if: ${{ needs.check-docker-image-version.outputs.cf_paga_changed=='true'}}
+#         id: build-test-push
+#         run: |
+        
+#           docker build . --file Dockerfile --tag cf_paga:0.0.1
+#           docker run --rm -v ./tmp:/data --workdir /code cf_paga:0.0.1 python /code/run.py --adata_path /data/adata.h5ad --prior_information /data/prior_information.json --parameters /data/parameters.json --output_filename /data/output.pkl
+#           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+#           docker tag cf_paga:0.0.1 huangzhaoyang/cf_paga:0.0.1
+#           docker push huangzhaoyang/cf_paga:0.0.1
