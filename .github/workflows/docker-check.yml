@@ -17,16 +17,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install yq
-      run: sudo apt-get install -y yq
+    - name: Install yq skopeo jq
+      run: sudo apt-get install -y yq skopeo jq
 
     - name: Check docker image version
       id: compare-version
       run:  |
           # current version is written in definition.yml
-          # METHOD_ID=$(yq e ".method.id" definition.yml)
+          # METHOD_ID=$(yq -e ".method.id" definition.yml)
           METHOD_ID="cf_paga"
-          CURRENT_VERSION=$(yq e ".method.version" definition.yml)
+          CURRENT_VERSION=$(yq -e ".method.version" definition.yml)
           # previous version 
           # PREVIOUS_VERSION=$(git show HEAD^:definition.yml | yq e ".method.version") # last commit before the push
           VERSION_LIST=$(skopeo list-tags docker://huangzhaoyang/cf_paga | jq -r ".Tags[]" | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$")
