@@ -33,10 +33,10 @@ jobs:
           PREVIOUS_VERSION=$(echo $VERSION_LIST | tail -n 1)
           if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
             echo "$METHOD_ID is new newer version,  build, test and push docker image!"
-            echo "::set-output name=${$METHOD_ID}_changed::true"
+            echo "::set-output name=${METHOD_ID}_changed::true"
           else
             echo "$METHOD_ID is the latest version."
-            echo "::set-output name=${$METHOD_ID}_changed::false"
+            echo "::set-output name=${METHOD_ID}_changed::false"
           fi
 
 #   push-docker-image:
